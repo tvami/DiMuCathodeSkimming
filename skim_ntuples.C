@@ -10,10 +10,14 @@
 ///       root -l -b -q 'skim_ntuples.C("sr","/path/to/files/")'
 ///       root -l -b -q 'skim_ntuples.C("vr", "/path/to/files/")'
 ///       root -l -b -q 'skim_ntuples.C("sr", "/path/to/files/", true)'  // validate files
+///       root -l -b -q 'skim_ntuples.C("sr", "/path/to/files/", false, 0, 100)'  // first 100 files
+///       root -l -b -q 'skim_ntuples.C("sr", "/path/to/files/", false, 2, 100)'  // files 200-299
 
 void skim_ntuples(TString region = "sr",
                   TString base_dir = "/ceph/cms/store/user/tvami/DiMuonScoutingNtuples/",
-                  bool validate = false) {
+                  bool validate = false,
+                  int job_index = 0,
+                  int files_per_job = 0) {  // 0 = process all files
 
     ROOT::EnableImplicitMT();
 
@@ -46,12 +50,15 @@ void skim_ntuples(TString region = "sr",
         dataset_name.ReplaceAll("crab_", "");
     }
     dataset_name.ReplaceAll(".root", "");
+    if (files_per_job > 0)
+        dataset_name += TString::Format("_job%d", job_index);
     TString output_file = TString::Format("skimmed_%s_%s.root", region.Data(), dataset_name.Data());
 
     // Build TChain
     TChain chain("Events");
 
-    TString find_cmd = TString::Format("find %s -name '*.root' 2>/dev/null", base_dir.Data());
+    // Collect all filenames and sort for deterministic ordering
+    TString find_cmd = TString::Format("find %s -name '*.root' 2>/dev/null | sort", base_dir.Data());
     FILE* pipe = popen(find_cmd.Data(), "r");
     if (!pipe) {
         std::cerr << "Error: cannot run find command\n";
@@ -60,12 +67,34 @@ void skim_ntuples(TString region = "sr",
 
     std::cout << "Reading filenames from pipe\n";
 
+    std::vector<std::string> all_files;
     char buffer[2048];
-    int nfiles = 0, nzombie = 0;
     while (fgets(buffer, sizeof(buffer), pipe) != NULL) {
         TString filename = buffer;
         filename.ReplaceAll("\n","");
-        if (filename.Length() == 0) continue;
+        if (filename.Length() > 0) all_files.push_back(filename.Data());
+    }
+    pclose(pipe);
+
+    std::cout << "Found " << all_files.size() << " total files in directory\n";
+
+    // Select file slice for this job
+    size_t start = 0, end = all_files.size();
+    if (files_per_job > 0) {
+        start = job_index * files_per_job;
+        end = std::min(start + (size_t)files_per_job, all_files.size());
+        if (start >= all_files.size()) {
+            std::cerr << "Error: job_index " << job_index << " out of range (only "
+                      << all_files.size() << " files, " << files_per_job << " per job).\n";
+            return;
+        }
+        std::cout << "Processing files " << start << " to " << end - 1
+                  << " (job " << job_index << ", " << files_per_job << " per job)\n";
+    }
+
+    int nfiles = 0, nzombie = 0;
+    for (size_t i = start; i < end; ++i) {
+        TString filename = all_files[i].c_str();
         if (validate) {
             TFile* test_file = TFile::Open(filename.Data(), "READ");
             if (test_file && !test_file->IsZombie() && test_file->GetNkeys() > 0) {
@@ -84,14 +113,13 @@ void skim_ntuples(TString region = "sr",
         }
         if (nfiles % 10 == 0) std::cout << "Added " << nfiles << " files...\r" << std::flush;
     }
-    pclose(pipe);
 
     if (nzombie > 0) std::cerr << "Skipped " << nzombie << " corrupted files\n";
     if (nfiles == 0) {
         std::cerr << "Error: No ROOT files found.\n";
         return;
     }
-    std::cout << "Found " << nfiles << " files\n";
+    std::cout << "Processing " << nfiles << " files\n";
 
     ROOT::RDataFrame df(chain);
 

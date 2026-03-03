@@ -33,7 +33,6 @@ sr /ceph/cms/store/data/Run2024F/ScoutingPFRun3/NANOAOD/ScoutNano-v1/2810000
 sr /ceph/cms/store/data/Run2024F/ScoutingPFRun3/NANOAOD/ScoutNano-v1/2810001
 sr /ceph/cms/store/data/Run2024F/ScoutingPFRun3/NANOAOD/ScoutNano-v1/2810002
 sr /ceph/cms/store/data/Run2024F/ScoutingPFRun3/NANOAOD/ScoutNano-v1/90000
-sr /ceph/cms/store/data/Run2024G/ScoutingPFRun3/NANOAOD/ScoutNano-v1
 sr /ceph/cms/store/data/Run2024G/ScoutingPFRun3/NANOAOD/ScoutNano-v1/110000
 sr /ceph/cms/store/data/Run2024G/ScoutingPFRun3/NANOAOD/ScoutNano-v1/110001
 sr /ceph/cms/store/data/Run2024G/ScoutingPFRun3/NANOAOD/ScoutNano-v1/110002
@@ -67,13 +66,11 @@ sr /ceph/cms/store/data/Run2024G/ScoutingPFRun3/NANOAOD/ScoutNano-v1/90000
 sr /ceph/cms/store/data/Run2024G/ScoutingPFRun3/NANOAOD/ScoutNano-v1/90001
 sr /ceph/cms/store/data/Run2024G/ScoutingPFRun3/NANOAOD/ScoutNano-v1/90002
 sr /ceph/cms/store/data/Run2024G/ScoutingPFRun3/NANOAOD/ScoutNano-v1/90003
-sr /ceph/cms/store/data/Run2024H/ScoutingPFRun3/NANOAOD/ScoutNano-v1
 sr /ceph/cms/store/data/Run2024H/ScoutingPFRun3/NANOAOD/ScoutNano-v1/2520000
 sr /ceph/cms/store/data/Run2024H/ScoutingPFRun3/NANOAOD/ScoutNano-v1/2520001
 sr /ceph/cms/store/data/Run2024H/ScoutingPFRun3/NANOAOD/ScoutNano-v1/2810000
 sr /ceph/cms/store/data/Run2024H/ScoutingPFRun3/NANOAOD/ScoutNano-v1/2810001
 sr /ceph/cms/store/data/Run2024H/ScoutingPFRun3/NANOAOD/ScoutNano-v1/90000
-sr /ceph/cms/store/data/Run2024I/ScoutingPFRun3/NANOAOD/ScoutNano-v1
 sr /ceph/cms/store/data/Run2024I/ScoutingPFRun3/NANOAOD/ScoutNano-v1/110000
 sr /ceph/cms/store/data/Run2024I/ScoutingPFRun3/NANOAOD/ScoutNano-v1/110001
 sr /ceph/cms/store/data/Run2024I/ScoutingPFRun3/NANOAOD/ScoutNano-v1/110002
@@ -86,5 +83,3 @@ sr /ceph/cms/store/data/Run2024I/ScoutingPFRun3/NANOAOD/ScoutNano-v1/2810000
 sr /ceph/cms/store/data/Run2024I/ScoutingPFRun3/NANOAOD/ScoutNano-v1/2810001
 sr /ceph/cms/store/data/Run2024I/ScoutingPFRun3/NANOAOD/ScoutNano-v1/2810002
 sr /ceph/cms/store/data/Run2024I/ScoutingPFRun3/NANOAOD/ScoutNano-v1/90000
-sr /ceph/cms/store/data/Run2024J/ScoutingPFRun3/NANOAOD/ScoutNano-v1
-sr /ceph/cms/store/data/Run2024J/ScoutingPFRun3/NANOAOD/ScoutNano-v1/90000

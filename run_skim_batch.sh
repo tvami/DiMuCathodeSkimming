@@ -2,6 +2,8 @@
 echo "Run script starting"
 echo "Region: $1"
 echo "Base directory: $2"
+echo "Job index: ${3:-0}"
+echo "Files per job: ${4:-0}"
 
 arch=el9_amd64_gcc12
 rel=CMSSW_14_1_0_pre4
@@ -46,10 +48,12 @@ echo -e "\n------------------ Skim Ntuples ------------------"
 
 region=$1
 base_dir=$2
+job_index=${3:-0}
+files_per_job=${4:-0}
 
-# run skim_ntuples.C with object, region, and base_dir parameters
-echo "\n[1] root -l -b -q 'skim_ntuples.C(\"$region\", \"$base_dir\")'"
-root -b -l -q "skim_ntuples.C(\"$region\", \"$base_dir\")"
+# run skim_ntuples.C with region, base_dir, and optional chunking parameters
+echo "\n[1] root -l -b -q 'skim_ntuples.C(\"$region\", \"$base_dir\", false, $job_index, $files_per_job)'"
+root -b -l -q "skim_ntuples.C(\"$region\", \"$base_dir\", false, $job_index, $files_per_job)"
 
 # echo "base directory has:"
 # /bin/ls -altr .
