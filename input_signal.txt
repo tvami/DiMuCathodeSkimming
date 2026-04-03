@@ -1,11 +1,3 @@
-sr /ceph/cms/store/user/tvami/DiMuonPlusX/DYto2Mu_Bin-MLL-120to200_TuneCP5_13p6TeV_powheg-pythia8
-sr /ceph/cms/store/user/tvami/DiMuonPlusX/QCD_Bin-PT-15to20_Fil-MuEnriched_TuneCP5_13p6TeV_pythia8
-sr /ceph/cms/store/user/tvami/DiMuonPlusX/QCD_Bin-PT-20to30_Fil-MuEnriched_TuneCP5_13p6TeV_pythia8
-sr /ceph/cms/store/user/tvami/DiMuonPlusX/QCD_Bin-PT-30to50_Fil-MuEnriched_TuneCP5_13p6TeV_pythia8
-sr /ceph/cms/store/user/tvami/DiMuonPlusX/QCD_Bin-PT-50to80_Fil-MuEnriched_TuneCP5_13p6TeV_pythia8
-sr /ceph/cms/store/user/tvami/DiMuonPlusX/QCD_Bin-PT-80to120_Fil-MuEnriched_TuneCP5_13p6TeV_pythia8
-sr /ceph/cms/store/user/tvami/DiMuonPlusX/TTto2L2Nu_TuneCP5_13p6TeV_powheg-pythia8
-sr /ceph/cms/store/user/tvami/DiMuonPlusX/WWto2L2Nu_TuneCP5_13p6TeV_powheg-pythia8
 sr /ceph/cms/store/user/tvami/DiMuonPlusX/TpTpTo2T2STo2Mu2B_Par-MTp1000-MS100_TuneCP5_13p6TeV_madgraph-pythia8
 sr /ceph/cms/store/user/tvami/DiMuonPlusX/TpTpTo2T2STo2Mu2B_Par-MTp1000-MS10_TuneCP5_13p6TeV_madgraph-pythia8
 sr /ceph/cms/store/user/tvami/DiMuonPlusX/TpTpTo2T2STo2Mu2B_Par-MTp1000-MS15_TuneCP5_13p6TeV_madgraph-pythia8
@@ -57,14 +49,6 @@ sr /ceph/cms/store/user/tvami/DiMuonPlusX/TpTpTo2T2STo2MuInv_Par-MTp1000-MS75_Tu
 sr /ceph/cms/store/user/tvami/DiMuonPlusX/TpTpTo2T2STo2MuInv_Par-MTp1000-MS80_TuneCP5_13p6TeV_madgraph-pythia8
 sr /ceph/cms/store/user/tvami/DiMuonPlusX/TpTpTo2T2STo2MuInv_Par-MTp1000-MS90_TuneCP5_13p6TeV_madgraph-pythia8
 sr /ceph/cms/store/user/tvami/DiMuonPlusX/TpTpTo2T2STo2MuInv_Par-MTp1000-MS95_TuneCP5_13p6TeV_madgraph-pythia8
-vr /ceph/cms/store/user/tvami/DiMuonPlusX/DYto2Mu_Bin-MLL-120to200_TuneCP5_13p6TeV_powheg-pythia8
-vr /ceph/cms/store/user/tvami/DiMuonPlusX/QCD_Bin-PT-15to20_Fil-MuEnriched_TuneCP5_13p6TeV_pythia8
-vr /ceph/cms/store/user/tvami/DiMuonPlusX/QCD_Bin-PT-20to30_Fil-MuEnriched_TuneCP5_13p6TeV_pythia8
-vr /ceph/cms/store/user/tvami/DiMuonPlusX/QCD_Bin-PT-30to50_Fil-MuEnriched_TuneCP5_13p6TeV_pythia8
-vr /ceph/cms/store/user/tvami/DiMuonPlusX/QCD_Bin-PT-50to80_Fil-MuEnriched_TuneCP5_13p6TeV_pythia8
-vr /ceph/cms/store/user/tvami/DiMuonPlusX/QCD_Bin-PT-80to120_Fil-MuEnriched_TuneCP5_13p6TeV_pythia8
-vr /ceph/cms/store/user/tvami/DiMuonPlusX/TTto2L2Nu_TuneCP5_13p6TeV_powheg-pythia8
-vr /ceph/cms/store/user/tvami/DiMuonPlusX/WWto2L2Nu_TuneCP5_13p6TeV_powheg-pythia8
 vr /ceph/cms/store/user/tvami/DiMuonPlusX/TpTpTo2T2STo2Mu2B_Par-MTp1000-MS100_TuneCP5_13p6TeV_madgraph-pythia8
 vr /ceph/cms/store/user/tvami/DiMuonPlusX/TpTpTo2T2STo2Mu2B_Par-MTp1000-MS10_TuneCP5_13p6TeV_madgraph-pythia8
 vr /ceph/cms/store/user/tvami/DiMuonPlusX/TpTpTo2T2STo2Mu2B_Par-MTp1000-MS15_TuneCP5_13p6TeV_madgraph-pythia8

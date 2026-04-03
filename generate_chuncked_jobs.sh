@@ -3,9 +3,9 @@
 # Each directory is split into chunks of FILES_PER_JOB files
 # Output: data_input_chunked.txt with columns: region base_dir job_index files_per_job
 
-FILES_PER_JOB=${1:-100}
-INPUT="data_input.txt"
-OUTPUT="data_input_chunked.txt"
+INPUT="${1:?Usage: $0 <input_file> [files_per_job]}"
+FILES_PER_JOB=${2:-50}
+OUTPUT="${INPUT%.txt}_chunked.txt"
 
 > "$OUTPUT"
 total_jobs=0

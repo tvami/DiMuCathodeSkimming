@@ -1,10 +1,12 @@
 /// Skim ntuples using RDataFrame for di-muon analysis
+/// Version v1.0.0: 4 steps in the cutflow including dR
+/// Version v1.0.1: removed dR < 1 cut, added trigger eff 2D plots, new vertex branches
 /// Cutflow:
 ///   0. All events
 ///   1. L1 Trigger (OR of DoubleMu seeds)
 ///   2. 2 quality OS (sr) / SS (vr) muons
 ///   3. + di-pT > 20 GeV
-///   4. + dR < 1
+///  Version v2.0.0: Add new branches needed for JECs
 ///
 /// Usage:
 ///       root -l -b -q 'skim_ntuples.C("sr","/path/to/files/")'
@@ -15,7 +17,7 @@
 
 void skim_ntuples(TString region = "sr",
                   TString base_dir = "/ceph/cms/store/user/tvami/DiMuonScoutingNtuples/",
-                  bool validate = false,
+                  bool validate = true,
                   int job_index = 0,
                   int files_per_job = 0) {  // 0 = process all files
 
@@ -243,7 +245,7 @@ void skim_ntuples(TString region = "sr",
         "L1_DoubleMu4_SQ_OS_dR_Max1p2 || L1_DoubleMu4p5_SQ_OS_dR_Max1p2",
         "L1 Trigger");
 
-    // Steps 2-4: Find best qualifying di-muon pair per event
+    // Steps 2-3: Find best qualifying di-muon pair per event
     // Quality muon: pT > 3 GeV, |eta| < 2.4, trackIso < 0.15, chi2/ndof < 3
     // Charge: OS for sr, SS for vr
     // Best pair chosen by highest di-pT
@@ -321,41 +323,36 @@ void skim_ntuples(TString region = "sr",
     // Step 3: di-pT > 20 GeV
     auto df_dipt = df_dimu.Filter("dimu_pt > 20", "di-p_{T} > 20 GeV");
 
-    // Step 4: dR < 1
-    auto df_dr = df_dipt.Filter("dimu_dr < 1", "#DeltaR < 1");
-
     // Define count actions BEFORE Snapshot so they run in the same event loop
     auto count_all     = df_q.Count();
     auto count_trigger = df_trigger.Count();
     auto count_dimu    = df_dimu.Count();
     auto count_dipt    = df_dipt.Count();
-    auto count_dr      = df_dr.Count();
 
     // --- Book histograms ---
 
-    // 2D: invariant mass at each cutflow step (steps 2-4, where a pair exists)
-    // Each event fills at step 2, and also at step 3 if it passes, and also step 4
+    // 2D: invariant mass at each cutflow step (steps 2-3, where a pair exists)
+    // Each event fills at step 2, and also at step 3 if it passes
     auto df_mass2d = df_dimu
-        .Define("mass_cf_steps", [](float dipt, float dr) {
+        .Define("mass_cf_steps", [](float dipt) {
             ROOT::VecOps::RVec<double> s = {0.};
-            if (dipt > 20) { s.push_back(1.); if (dr < 1) s.push_back(2.); }
+            if (dipt > 20) s.push_back(1.);
             return s;
-        }, {"dimu_pt", "dimu_dr"})
-        .Define("mass_cf_vals", [](float mass, float dipt, float dr) {
+        }, {"dimu_pt"})
+        .Define("mass_cf_vals", [](float mass, float dipt) {
             ROOT::VecOps::RVec<double> v = {(double)mass};
-            if (dipt > 20) { v.push_back(mass); if (dr < 1) v.push_back(mass); }
+            if (dipt > 20) v.push_back(mass);
             return v;
-        }, {"dimu_mass", "dimu_pt", "dimu_dr"});
+        }, {"dimu_mass", "dimu_pt"});
     auto h2_mass_cutflow = df_mass2d.Histo2D(
         {"h2_mass_cutflow",
          "Di-muon mass at cutflow steps;Cutflow step;m_{#mu#mu} [GeV]",
-         3, -0.5, 2.5, 200, 0, 200},
+         2, -0.5, 1.5, 200, 0, 200},
         "mass_cf_steps", "mass_cf_vals");
 
     // 1D: invariant mass at each cutflow step
     auto h_mass_dimu = df_dimu.Histo1D({"h_mass_dimu", "m_{#mu#mu} (2 quality #mu);m_{#mu#mu} [GeV];Events", 200, 0, 200}, "dimu_mass");
     auto h_mass_dipt = df_dipt.Histo1D({"h_mass_dipt", "m_{#mu#mu} (di-p_{T} > 20);m_{#mu#mu} [GeV];Events", 200, 0, 200}, "dimu_mass");
-    auto h_mass_dr   = df_dr.Histo1D({"h_mass_dr", "m_{#mu#mu} (#DeltaR < 1);m_{#mu#mu} [GeV];Events", 200, 0, 200}, "dimu_mass");
 
     // Object multiplicities at each cutflow step
     // -- All events --
@@ -373,16 +370,11 @@ void skim_ntuples(TString region = "sr",
     auto h_npho_dimu = df_dimu.Histo1D({"h_npho_dimu", "N quality #gamma (2#mu);N_{#gamma};Events", 20, -0.5, 19.5}, "n_quality_photons");
     auto h_nele_dimu = df_dimu.Histo1D({"h_nele_dimu", "N quality e (2#mu);N_{e};Events",      20, -0.5, 19.5}, "n_quality_electrons");
     auto h_njet_dimu = df_dimu.Histo1D({"h_njet_dimu", "N quality jet (2#mu);N_{jet};Events",  20, -0.5, 19.5}, "n_quality_jets");
-    // -- After di-pT > 20 --
+    // -- After di-pT > 20 (final) --
     auto h_nmu_dipt  = df_dipt.Histo1D({"h_nmu_dipt",  "N quality #mu (di-p_{T}>20);N_{#mu};Events",  20, -0.5, 19.5}, "n_quality_muons");
     auto h_npho_dipt = df_dipt.Histo1D({"h_npho_dipt", "N quality #gamma (di-p_{T}>20);N_{#gamma};Events", 20, -0.5, 19.5}, "n_quality_photons");
     auto h_nele_dipt = df_dipt.Histo1D({"h_nele_dipt", "N quality e (di-p_{T}>20);N_{e};Events",      20, -0.5, 19.5}, "n_quality_electrons");
     auto h_njet_dipt = df_dipt.Histo1D({"h_njet_dipt", "N quality jet (di-p_{T}>20);N_{jet};Events",  20, -0.5, 19.5}, "n_quality_jets");
-    // -- After dR < 1 (final) --
-    auto h_nmu_dr  = df_dr.Histo1D({"h_nmu_dr",  "N quality #mu (#DeltaR<1);N_{#mu};Events",  20, -0.5, 19.5}, "n_quality_muons");
-    auto h_npho_dr = df_dr.Histo1D({"h_npho_dr", "N quality #gamma (#DeltaR<1);N_{#gamma};Events", 20, -0.5, 19.5}, "n_quality_photons");
-    auto h_nele_dr = df_dr.Histo1D({"h_nele_dr", "N quality e (#DeltaR<1);N_{e};Events",      20, -0.5, 19.5}, "n_quality_electrons");
-    auto h_njet_dr = df_dr.Histo1D({"h_njet_dr", "N quality jet (#DeltaR<1);N_{jet};Events",  20, -0.5, 19.5}, "n_quality_jets");
 
     // Per-muon distributions at each cutflow step (fills one entry per muon)
     // -- After trigger --
@@ -393,31 +385,105 @@ void skim_ntuples(TString region = "sr",
     auto h_mu_eta_dimu      = df_dimu.Histo1D({"h_mu_eta_dimu",      "#eta (2#mu);#eta;Muons",                   100, -3, 3},      "ScoutingMuonVtx_eta");
     auto h_mu_trackIso_dimu = df_dimu.Histo1D({"h_mu_trackIso_dimu", "trackIso (2#mu);trackIso;Muons",            100, 0, 1},       "ScoutingMuonVtx_trackIso");
     auto h_mu_normchi2_dimu = df_dimu.Histo1D({"h_mu_normchi2_dimu", "#chi^{2}/ndof (2#mu);#chi^{2}/ndof;Muons",  100, 0, 20},      "ScoutingMuonVtx_normchi2");
-    // -- After di-pT > 20 --
+    // -- After di-pT > 20 (final) --
     auto h_mu_eta_dipt      = df_dipt.Histo1D({"h_mu_eta_dipt",      "#eta (di-p_{T}>20);#eta;Muons",                   100, -3, 3},      "ScoutingMuonVtx_eta");
     auto h_mu_trackIso_dipt = df_dipt.Histo1D({"h_mu_trackIso_dipt", "trackIso (di-p_{T}>20);trackIso;Muons",            100, 0, 1},       "ScoutingMuonVtx_trackIso");
     auto h_mu_normchi2_dipt = df_dipt.Histo1D({"h_mu_normchi2_dipt", "#chi^{2}/ndof (di-p_{T}>20);#chi^{2}/ndof;Muons",  100, 0, 20},      "ScoutingMuonVtx_normchi2");
-    // -- After dR < 1 (final) --
-    auto h_mu_eta_dr      = df_dr.Histo1D({"h_mu_eta_dr",      "#eta (#DeltaR<1);#eta;Muons",                   100, -3, 3},      "ScoutingMuonVtx_eta");
-    auto h_mu_trackIso_dr = df_dr.Histo1D({"h_mu_trackIso_dr", "trackIso (#DeltaR<1);trackIso;Muons",            100, 0, 1},       "ScoutingMuonVtx_trackIso");
-    auto h_mu_normchi2_dr = df_dr.Histo1D({"h_mu_normchi2_dr", "#chi^{2}/ndof (#DeltaR<1);#chi^{2}/ndof;Muons",  100, 0, 20},      "ScoutingMuonVtx_normchi2");
+
+    // --- Trigger efficiency histograms ---
+    // Find di-muon pair before trigger cut (denominator for efficiency)
+    auto df_trig_eff = df_q
+        .Define("trigger_or",
+            "(int)(L1_DoubleMu_12_5 || L1_DoubleMu_15_7 || "
+            "L1_DoubleMu4p5er2p0_SQ_OS_Mass_Min7 || L1_DoubleMu4p5er2p0_SQ_OS_Mass_7to18 || "
+            "L1_DoubleMu4_SQ_OS_dR_Max1p2 || L1_DoubleMu4p5_SQ_OS_dR_Max1p2)")
+        .Define("pretrig_dimu", [region_str](
+                const ROOT::VecOps::RVec<float>& pt,
+                const ROOT::VecOps::RVec<float>& eta,
+                const ROOT::VecOps::RVec<float>& phi,
+                const ROOT::VecOps::RVec<float>& mass,
+                const ROOT::VecOps::RVec<int>& charge,
+                const ROOT::VecOps::RVec<float>& trackIso,
+                const ROOT::VecOps::RVec<float>& normchi2) {
+            ROOT::VecOps::RVec<float> result = {-1.f, -1.f, -1.f};
+            std::vector<int> good;
+            for (size_t i = 0; i < pt.size(); ++i) {
+                if (pt[i] > 3 && std::abs(eta[i]) < 2.4 && trackIso[i] < 0.15 && normchi2[i] < 3)
+                    good.push_back(i);
+            }
+            if (good.size() < 2) return result;
+            float best_dipt = -1;
+            int best_i = -1, best_j = -1;
+            for (size_t a = 0; a < good.size(); ++a) {
+                for (size_t b = a + 1; b < good.size(); ++b) {
+                    int i = good[a], j = good[b];
+                    bool os = charge[i] * charge[j] < 0;
+                    if (region_str == "sr" && !os) continue;
+                    if (region_str == "vr" && os) continue;
+                    float px = pt[i]*std::cos(phi[i]) + pt[j]*std::cos(phi[j]);
+                    float py = pt[i]*std::sin(phi[i]) + pt[j]*std::sin(phi[j]);
+                    float dipt = std::sqrt(px*px + py*py);
+                    if (dipt > best_dipt) {
+                        best_dipt = dipt;
+                        best_i = i; best_j = j;
+                    }
+                }
+            }
+            if (best_i < 0) return result;
+            float lead_pt = std::max(pt[best_i], pt[best_j]);
+            float sublead_pt = std::min(pt[best_i], pt[best_j]);
+            return ROOT::VecOps::RVec<float>{lead_pt, sublead_pt, best_dipt};
+        }, {"ScoutingMuonVtx_pt", "ScoutingMuonVtx_eta", "ScoutingMuonVtx_phi", "ScoutingMuonVtx_m",
+            "ScoutingMuonVtx_charge", "ScoutingMuonVtx_trackIso", "ScoutingMuonVtx_normchi2"})
+        .Filter("pretrig_dimu[0] >= 0", "Has pre-trigger di-muon pair")
+        .Define("leading_mu_pt",    "pretrig_dimu[0]")
+        .Define("subleading_mu_pt", "pretrig_dimu[1]")
+        .Define("pretrig_dipt",     "pretrig_dimu[2]");
+
+    auto h2_trigeff_leading = df_trig_eff.Histo2D(
+        {"h2_trigeff_leading",
+         "Trigger OR vs leading #mu p_{T};p_{T}^{lead} [GeV];L1 Trigger OR",
+         100, 0, 100, 2, -0.5, 1.5},
+        "leading_mu_pt", "trigger_or");
+    auto h2_trigeff_subleading = df_trig_eff.Histo2D(
+        {"h2_trigeff_subleading",
+         "Trigger OR vs subleading #mu p_{T};p_{T}^{sublead} [GeV];L1 Trigger OR",
+         100, 0, 100, 2, -0.5, 1.5},
+        "subleading_mu_pt", "trigger_or");
+    auto h2_trigeff_dipt = df_trig_eff.Histo2D(
+        {"h2_trigeff_dipt",
+         "Trigger OR vs di-#mu p_{T};p_{T}^{#mu#mu} [GeV];L1 Trigger OR",
+         100, 0, 200, 2, -0.5, 1.5},
+        "pretrig_dipt", "trigger_or");
 
     // Branches to save in the skimmed output
     std::vector<std::string> branches_to_keep = {
         // Event-level
-        "event", 
-        "run", 
+        "event",
+        "run",
         "luminosityBlock",
         // L1 Triggers
-        "L1_DoubleMu_12_5", 
+        "L1_DoubleMu_12_5",
         "L1_DoubleMu_15_7",
-        "L1_DoubleMu4p5er2p0_SQ_OS_Mass_Min7", 
+        "L1_DoubleMu4p5er2p0_SQ_OS_Mass_Min7",
         "L1_DoubleMu4p5er2p0_SQ_OS_Mass_7to18",
-        "L1_DoubleMu4_SQ_OS_dR_Max1p2", 
+        "L1_DoubleMu4_SQ_OS_dR_Max1p2",
         "L1_DoubleMu4p5_SQ_OS_dR_Max1p2",
+        // Primary Vertex
+        "nScoutingPrimaryVertex",
+        "ScoutingPrimaryVertex_x",
+        "ScoutingPrimaryVertex_y",
+        "ScoutingPrimaryVertex_z",
+        // Muon vertex
+        "ScoutingMuonVtx_trk_dxy",
+        "ScoutingMuonVtx_trk_dxyError",
+        "ScoutingMuonVtx_trk_dz",
+        "ScoutingMuonVtx_trk_vx",
+        "ScoutingMuonVtx_trk_vy",       
+        "ScoutingMuonVtx_trk_vz",
         // Muons
         "nScoutingMuonVtx",
-        "ScoutingMuonVtx_pt", 
+        "ScoutingMuonVtx_pt",
         "ScoutingMuonVtx_eta",
         "ScoutingMuonVtx_phi",
         "ScoutingMuonVtx_m",
@@ -500,27 +566,25 @@ void skim_ntuples(TString region = "sr",
     };
 
     // Snapshot triggers the event loop for all booked actions
-    df_dr.Snapshot("Events", output_file.Data(), branches_to_keep);
+    df_dipt.Snapshot("Events", output_file.Data(), branches_to_keep);
 
-    auto report = df_dr.Report();
+    auto report = df_dipt.Report();
     report->Print();
 
     // Save cutflow histogram
     TFile* f = TFile::Open(output_file.Data(), "UPDATE");
 
-    TH1F* h_cutflow = new TH1F("h_cutflow", "Cutflow;Cut;Events", 5, 0, 5);
+    TH1F* h_cutflow = new TH1F("h_cutflow", "Cutflow;Cut;Events", 4, 0, 4);
     h_cutflow->GetXaxis()->SetBinLabel(1, "All events");
     h_cutflow->GetXaxis()->SetBinLabel(2, "Trigger");
     h_cutflow->GetXaxis()->SetBinLabel(3, charge_label.Data());
     h_cutflow->GetXaxis()->SetBinLabel(4, "di-p_{T} > 20 GeV");
-    h_cutflow->GetXaxis()->SetBinLabel(5, "#DeltaR < 1");
 
     double n_total = *count_all;
     h_cutflow->SetBinContent(1, n_total);
     h_cutflow->SetBinContent(2, *count_trigger);
     h_cutflow->SetBinContent(3, *count_dimu);
     h_cutflow->SetBinContent(4, *count_dipt);
-    h_cutflow->SetBinContent(5, *count_dr);
 
     h_cutflow->SetMinimum(0);
     h_cutflow->SetMaximum(1.3 * n_total);
@@ -530,13 +594,11 @@ void skim_ntuples(TString region = "sr",
     auto* h2_ptr = h2_mass_cutflow.GetPtr();
     h2_ptr->GetXaxis()->SetBinLabel(1, charge_label.Data());
     h2_ptr->GetXaxis()->SetBinLabel(2, "di-p_{T} > 20 GeV");
-    h2_ptr->GetXaxis()->SetBinLabel(3, "#DeltaR < 1");
     h2_ptr->Write();
 
     // Write 1D mass histograms
     h_mass_dimu->Write();
     h_mass_dipt->Write();
-    h_mass_dr->Write();
 
     // Write object multiplicity histograms
     std::vector<ROOT::RDF::RResultPtr<TH1D>> obj_histos = {
@@ -544,7 +606,6 @@ void skim_ntuples(TString region = "sr",
         h_nmu_trig, h_npho_trig, h_nele_trig, h_njet_trig,
         h_nmu_dimu, h_npho_dimu, h_nele_dimu, h_njet_dimu,
         h_nmu_dipt, h_npho_dipt, h_nele_dipt, h_njet_dipt,
-        h_nmu_dr, h_npho_dr, h_nele_dr, h_njet_dr,
     };
     for (auto& h : obj_histos) h->Write();
 
@@ -553,9 +614,13 @@ void skim_ntuples(TString region = "sr",
         h_mu_eta_trig, h_mu_trackIso_trig, h_mu_normchi2_trig,
         h_mu_eta_dimu, h_mu_trackIso_dimu, h_mu_normchi2_dimu,
         h_mu_eta_dipt, h_mu_trackIso_dipt, h_mu_normchi2_dipt,
-        h_mu_eta_dr,   h_mu_trackIso_dr,   h_mu_normchi2_dr,
     };
     for (auto& h : mu_histos) h->Write();
+
+    // Write trigger efficiency histograms
+    h2_trigeff_leading->Write();
+    h2_trigeff_subleading->Write();
+    h2_trigeff_dipt->Write();
 
     f->Close();
     delete f;
